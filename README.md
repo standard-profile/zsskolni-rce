@@ -1,0 +1,1 @@
+# zsskolni-rce
