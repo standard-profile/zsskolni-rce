@@ -136,8 +136,8 @@
 
     // km = celkový součet kilometrů od začátku akce (ručně upravuj zde)
 const CLASSES = [
-      { trida: "5.A", cil: "Amsterdam", cil_lat: 52.377956, cil_lng: 4.897070,  km: 10, color: "#FF5733" }, // Oranžová
-      { trida: "5.B", cil: "Paříž",     cil_lat: 48.856614, cil_lng: 2.352222,  km: 50, color: "#33FF57" }, // Zelená
+      { trida: "5.A", cil: "Amsterdam", cil_lat: 52.377956, cil_lng: 4.897070,  km: 0, color: "#FF5733" }, // Oranžová
+      { trida: "5.B", cil: "Paříž",     cil_lat: 48.856614, cil_lng: 2.352222,  km: 0, color: "#33FF57" }, // Zelená
       { trida: "6.A", cil: "Madrid",    cil_lat: 40.416775, cil_lng: -3.703790, km: 0,  color: "#3357FF" }, // Modrá
       { trida: "6.B", cil: "Monaco",    cil_lat: 43.738418, cil_lng: 7.424616,  km: 0,  color: "#F333FF" }, // Růžová
       { trida: "6.C", cil: "Paříž",     cil_lat: 48.856614, cil_lng: 2.352222,  km: 0,  color: "#FF33A1" }, // Sytá růžová
@@ -275,12 +275,21 @@ const CLASSES = [
         const kmClamped = Math.max(0, Math.min(kmAkt, totalKm));
         const pos = pointAlongLine(route.line, kmClamped);
 
-        const classMarker = L.circleMarker([pos[1], pos[0]], {
-          radius: 8,
-          weight: 2,
-          color: "#0d47a1",
-          fillColor: "#1976d2",
+const classMarker = L.circleMarker([pos[1], pos[0]], {
+          radius: 10,
+          weight: 3,
+          color: "#ffffff", 
+          fillColor: c.color, // Použije farbu zo zoznamu vyššie
           fillOpacity: 1
+        }).addTo(layerGroup);
+
+        // Toto pridá textovú menovku (napr. "5.A") priamo k bodke
+        L.marker([pos[1], pos[0]], {
+          icon: L.divIcon({
+            className: 'class-label-wrapper',
+            html: `<div class="class-label" style="color: ${c.color}; border-color: ${c.color}; transform: translate(12px, -10px);">${c.trida}</div>`,
+            iconSize: [0, 0]
+          })
         }).addTo(layerGroup);
 
         const progress = totalKm > 0 ? (kmClamped / totalKm) : 0;
@@ -360,6 +369,7 @@ const CLASSES = [
 </body>
 
 </html>
+
 
 
 
