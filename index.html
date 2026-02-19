@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kam až dojdem o jarních prázdninách - mapa tříd</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    :root { --border:#e8e8e8; --bg:#ffffff; --muted:#666; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); }
+    header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    h1 { margin: 0; font-size: 18px; }
+    .sub { margin-top: 4px; color: var(--muted); font-size: 14px; }
+
+    #map { height: 62vh; width: 100%; }
+
+    .wrap { padding: 12px 16px; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .small { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px 8px; text-align: left; font-size: 14px; vertical-align: middle; }
+    th { background: #fafafa; position: sticky; top: 0; z-index: 1; }
+
+    .pill { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#f2f6ff; }
+    .muted { color: var(--muted); }
+
+    .legend { display:flex; gap:12px; flex-wrap: wrap; align-items:center; padding: 10px 0 0; color: var(--muted); font-size: 13px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display:inline-block; margin-right: 6px; border: 2px solid rgba(0,0,0,0.15); vertical-align: middle; }
+    .dot-start { background: #e53935; border-color: rgba(229,57,53,0.45); }
+    .dot-class { background: #1976d2; border-color: rgba(25,118,210,0.35); }
+
+    .flag-icon {
+      font-size: 20px;
+      line-height: 20px;
+      transform: translate(-2px, -2px);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.1);
+    }
+
+    .loading {
+      display:flex; align-items:center; gap:8px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid #ddd;
+      border-top-color: #888;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="header-inner">
+    <img src="logo.png" alt="Logo školy" class="header-logo">
+    <div>
+      <h1>Kam až dojdem o jarních prázdninách</h1>
+      <div class="sub">Vyberte cíl. Sbírejte kilometry. Cestujte světem.</div>
+    </div>
+  </div>
+</header>
+
+  <div id="map"></div>
+
+  <div class="wrap">
+    <div class="hint">
+      Kilometry upravuješ ručně v souboru <b>index.html</b> v poli <b>CLASSES</b> (hodnota <b>km</b>).
+      Trasy se načítají jen jednou při načtení stránky.
+    </div>
+    <div class="small">
+      Tip: Klikni na řádek třídy v tabulce a mapa se na ni přiblíží.
+    </div>
+
+    <div id="status" class="loading" style="display:none;">
+      <span class="spinner"></span><span>Načítám trasy...</span>
+    </div>
+
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th>Třída</th>
+          <th>Cíl</th>
+          <th>Km aktuálně</th>
+          <th>Délka trasy</th>
+          <th>Hotovo</th>
+          <th>Zbývá</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div class="legend">
+      <span><span class="dot dot-start"></span>Start (Roudnice nad Labem)</span>
+      <span><span class="dot dot-class"></span>Aktuální pozice třídy</span>
+      <span>🚩 Cíl třídy</span>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // =========================
+    // 1) DATA - DENNĚ MĚNÍŠ JEN km TADY
+    // =========================
+
+    const START = {
+      name: "Roudnice nad Labem",
+      lat: 50.42528,
+      lng: 14.26175
+    };
+
+    // km = celkový součet kilometrů od začátku akce (ručně uprav v kódu)
+    const CLASSES = [
+      { trida: "5.A", cil: "Berlin",    cil_lat: 52.520008, cil_lng: 13.404954, km: 0 },
+      { trida: "6.A", cil: "Amsterdam", cil_lat: 52.377956, cil_lng: 4.897070,  km: 0 },
+      { trida: "7.A", cil: "Sofia",     cil_lat: 42.698334, cil_lng: 23.319941, km: 0 },
+      { trida: "8.A", cil: "Athény",    cil_lat: 37.983810, cil_lng: 23.727539, km: 0 },
+      { trida: "9.A", cil: "Kraków",    cil_lat: 50.049683, cil_lng: 19.944544, km: 0 },
+    ];
+
+    // =========================
+    // 2) ROUTING (silnice) přes OSRM
+    // =========================
+    const OSRM_ROUTE = "https://router.project-osrm.org/route/v1/driving/";
+
+    async function getRouteGeoJSON(startLng, startLat, endLng, endLat) {
+      const url = `${OSRM_ROUTE}${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson&alternatives=false`;
+      const res = await fetch(url, { cache: "force-cache" });
+      if (!res.ok) throw new Error("OSRM error: " + res.status);
+      const data = await res.json();
+      if (!data.routes || !data.routes.length) throw new Error("OSRM: no route");
+      const route = data.routes[0];
+      return {
+        distanceKm: route.distance / 1000,
+        line: route.geometry // GeoJSON LineString
+      };
+    }
+
+    // =========================
+    // 3) Výpočet bodu na trase
+    // =========================
+    function pointAlongLine(line, targetKm) {
+      const coords = line.coordinates; // [ [lng,lat], ... ]
+      if (!coords || coords.length < 2) return coords?.[0] ?? [START.lng, START.lat];
+
+      const R = 6371; // km
+      const toRad = d => d * Math.PI / 180;
+
+      function havKm(a, b) {
+        const lat1 = toRad(a[1]), lon1 = toRad(a[0]);
+        const lat2 = toRad(b[1]), lon2 = toRad(b[0]);
+        const dLat = lat2 - lat1, dLon = lon2 - lon1;
+        const s = Math.sin(dLat/2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(s));
+      }
+
+      let acc = 0;
+      for (let i = 0; i < coords.length - 1; i++) {
+        const a = coords[i], b = coords[i + 1];
+        const seg = havKm(a, b);
+        if (seg <= 0) continue;
+
+        if (acc + seg >= targetKm) {
+          const t = (targetKm - acc) / seg;
+          const lng = a[0] + (b[0] - a[0]) * t;
+          const lat = a[1] + (b[1] - a[1]) * t;
+          return [lng, lat];
+        }
+        acc += seg;
+      }
+      return coords[coords.length - 1];
+    }
+
+    function pct(progress) {
+      const p = Math.max(0, Math.min(1, progress));
+      return Math.round(p * 100) + "%";
+    }
+    function formatKm(x) {
+      if (!isFinite(x)) return "-";
+      return Math.round(x).toString();
+    }
+
+    // =========================
+    // 4) MAPA
+    // =========================
+    const map = L.map('map', { zoomControl: true }).setView([50.08, 14.43], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    const layerGroup = L.layerGroup().addTo(map);
+
+    function setLoading(isLoading) {
+      const status = document.getElementById("status");
+      status.style.display = isLoading ? "flex" : "none";
+    }
+
+    function addStartMarker() {
+      const m = L.circleMarker([START.lat, START.lng], {
+        radius: 8,
+        weight: 2,
+        color: "#b71c1c",
+        fillColor: "#e53935",
+        fillOpacity: 1
+      }).addTo(layerGroup);
+      m.bindPopup(`<b>Start</b><br>${START.name}<br>${START.lat.toFixed(5)}, ${START.lng.toFixed(5)}`);
+      return m;
+    }
+
+    function makeFlagIcon() {
+      return L.divIcon({
+        className: "",
+        html: `<div class="flag-icon">🚩</div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      });
+    }
+
+    // =========================
+    // 5) CACHE tras a objektů (načítá se jen jednou)
+    // =========================
+    // routeCache[trida] = { line, totalKm, classMarker, endFlag, lastPos }
+    const routeCache = {};
+
+    async function initOnce() {
+      layerGroup.clearLayers();
+      addStartMarker();
+
+      setLoading(true);
+
+      // Načti trasy paralelně
+      const tasks = CLASSES.map(async (c) => {
+        const route = await getRouteGeoJSON(START.lng, START.lat, c.cil_lng, c.cil_lat);
+
+        // Vykresli trasu jednou
+        L.geoJSON(route.line, { style: { weight: 4, opacity: 0.65 } }).addTo(layerGroup);
+
+        // Cíl jako 🚩
+        const endFlag = L.marker([c.cil_lat, c.cil_lng], { icon: makeFlagIcon() }).addTo(layerGroup);
+        endFlag.bindPopup(`<b>Cíl</b><br>${c.cil}`);
+
+        // Aktuální pozice třídy podle km
+        const totalKm = route.distanceKm;
+        const kmAkt = Number(c.km || 0);
+        const kmClamped = Math.max(0, Math.min(kmAkt, totalKm));
+        const pos = pointAlongLine(route.line, kmClamped);
+
+        const classMarker = L.circleMarker([pos[1], pos[0]], {
+          radius: 8,
+          weight: 2,
+          color: "#0d47a1",
+          fillColor: "#1976d2",
+          fillOpacity: 1
+        }).addTo(layerGroup);
+
+        const progress = totalKm > 0 ? (kmClamped / totalKm) : 0;
+
+        classMarker.bindPopup(
+          `<b>${c.trida}</b><br>` +
+          `Cíl: ${c.cil}<br>` +
+          `${formatKm(kmClamped)} / ${formatKm(totalKm)} km (${pct(progress)})`
+        );
+
+        routeCache[c.trida] = {
+          line: route.line,
+          totalKm,
+          classMarker,
+          endFlag,
+          lastPos: pos
+        };
+      });
+
+      await Promise.all(tasks);
+
+      // Fit bounds
+      const bounds = [[START.lat, START.lng]];
+      for (const c of CLASSES) bounds.push([c.cil_lat, c.cil_lng]);
+      map.fitBounds(bounds, { padding: [30, 30] });
+
+      // Postav tabulku podle cache
+      buildTable();
+
+      setLoading(false);
+    }
+
+    function buildTable() {
+      const tbody = document.querySelector("#tbl tbody");
+      tbody.innerHTML = "";
+
+      for (const c of CLASSES) {
+        const rc = routeCache[c.trida];
+        if (!rc) continue;
+
+        const totalKm = rc.totalKm;
+        const kmAkt = Number(c.km || 0);
+        const kmClamped = Math.max(0, Math.min(kmAkt, totalKm));
+        const progress = totalKm > 0 ? (kmClamped / totalKm) : 0;
+        const remaining = Math.max(0, totalKm - kmClamped);
+
+        const tr = document.createElement("tr");
+        tr.style.cursor = "pointer";
+        tr.dataset.trida = c.trida;
+
+        tr.innerHTML = `
+          <td><span class="pill">${c.trida}</span></td>
+          <td>${c.cil}</td>
+          <td>${formatKm(kmAkt)}</td>
+          <td>${formatKm(totalKm)}</td>
+          <td>${pct(progress)}</td>
+          <td>${formatKm(remaining)} km</td>
+        `;
+
+        tr.addEventListener("click", () => {
+          const pos = rc.lastPos;
+          map.setView([pos[1], pos[0]], 6);
+          rc.classMarker.openPopup();
+        });
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    initOnce().catch(err => {
+      setLoading(false);
+      alert("Chyba při načítání tras. Zkus obnovit stránku.\n\n" + err.message);
+      console.error(err);
+    });
+  </script>
+</body>
+</html>

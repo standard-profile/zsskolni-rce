@@ -1,0 +1,10 @@
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-logo {
+  height: 60px;   /* môžeš upraviť veľkosť */
+  width: auto;
+}
