@@ -1,4 +1,4 @@
-const startTarget = new Date("Feb 19, 2026 08:00:00").getTime();
+const startTarget = new Date("Feb 20, 2026 08:00:00").getTime();
 const endTarget = new Date("Mar 1, 2026 12:00:00").getTime();
 
 const timerElement = document.getElementById("timer");
@@ -31,3 +31,4 @@ const updateTimer = setInterval(function() {
   timerElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
 
 }, 1000);
+
