@@ -12,15 +12,17 @@
 
     /* Styl pro textový štítek u tečky třídy */
 .class-label {
-  background: white;
-  border: 2px solid currentColor;
-  border-radius: 4px;
-  padding: 1px 4px;
-  font-weight: bold;
-  font-size: 11px;
-  white-space: nowrap;
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-}
+      background: white;
+      border: 2px solid currentColor;
+      border-radius: 6px;       /* Trochu kulatější rohy */
+      padding: 2px 6px;         /* Více místa kolem textu */
+      font-weight: 800;         /* Extra tučné písmo */
+      font-size: 13px;          /* O chlup větší text */
+      white-space: nowrap;      /* Zabrání zalomení textu */
+      display: inline-block;    /* Zajistí, že se pozadí natáhne podle textu */
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.3); /* Výraznější stín pro čitelnost */
+      pointer-events: none;     /* Aby štítek nepřekážel při klikání na mapu */
+    }
     
     :root { --border:#e8e8e8; --bg:#ffffff; --muted:#666; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); }
@@ -287,7 +289,7 @@ const classMarker = L.circleMarker([pos[1], pos[0]], {
         L.marker([pos[1], pos[0]], {
           icon: L.divIcon({
             className: 'class-label-wrapper',
-            html: `<div class="class-label" style="color: ${c.color}; border-color: ${c.color}; transform: translate(12px, -10px);">${c.trida}</div>`,
+            html: `<div class="class-label" style="color: ${c.color}; border-color: {c.color}; transform: translate(15px, -15px);&quot;&gt;{c.trida}</div>`,
             iconSize: [0, 0]
           })
         }).addTo(layerGroup);
@@ -369,6 +371,7 @@ const classMarker = L.circleMarker([pos[1], pos[0]], {
 </body>
 
 </html>
+
 
 
 
