@@ -1,29 +1,60 @@
 /* Základní stylování hlavičky */
 header {
-  background-color: #f8f9fa; /* Volitelné: barva pozadí hlavičky */
-  padding: 20px;            /* Odsazení obsahu od okrajů prohlížeče */
+  background-color: #f8f9fa;
+  padding: 20px;
 }
 
-/* Flexbox kontejner, který drží logo a texty vedle sebe */
+/* Hlavní kontejner, který rozděluje levou a pravou stranu */
 .header-inner {
   display: flex;
-  align-items: center;      /* Vertikální zarovnání na střed */
-  gap: 25px;                /* Přesná mezera mezi logem a textem */
+  align-items: center;
+  justify-content: space-between; /* Toto odtlačí odpočet doprava */
+  gap: 25px;
+}
+
+/* Levá část: Logo + Nadpisy */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 25px; /* Mezera mezi logem a textem */
 }
 
 /* Nastavení loga */
 .header-logo {
-  height: 65px;             /* Výška dle tvého zadání */
-  width: auto;              /* Šířka se dopočítá automaticky, aby se logo nedeformovalo */
+  height: 65px;
+  width: auto;
 }
 
-/* Úprava textů pro lepší vzhled */
+/* Úprava textů */
 h1 {
-  margin: 0;                /* Odstraní výchozí horní/dolní okraj nadpisu */
+  margin: 0;
   font-size: 1.8rem;
 }
 
 .sub {
-  color: #555;              /* Šedší barva pro podnadpis */
+  color: #555;
   font-size: 1rem;
+}
+
+/* Pravá část: Odpočítávání */
+.countdown-container {
+  text-align: right;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.05); /* Jemné šedé pozadí */
+  border-radius: 10px;
+  min-width: 220px;
+}
+
+#countdown-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+#timer {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #d9534f; /* Červená barva, aby odpočet vynikl */
+  font-variant-numeric: tabular-nums; /* Zabrání "poskakování" čísel */
 }
