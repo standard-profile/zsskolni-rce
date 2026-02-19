@@ -285,14 +285,15 @@ const classMarker = L.circleMarker([pos[1], pos[0]], {
           fillOpacity: 1
         }).addTo(layerGroup);
 
-        // Toto pridá textovú menovku (napr. "5.A") priamo k bodke
-        L.marker([pos[1], pos[0]], {
-          icon: L.divIcon({
-            className: 'class-label-wrapper',
-            html: `<div class="class-label" style="color: ${c.color}; border-color: {c.color}; transform: translate(15px, -15px);&quot;&gt;{c.trida}</div>`,
-            iconSize: [0, 0]
-          })
-        }).addTo(layerGroup);
+// Toto přidá textovou menovku (např. "5.A") přímo k bodce
+L.marker([pos[1], pos[0]], {
+  icon: L.divIcon({
+    className: 'class-label-wrapper',
+    // Opraveno: žádné &quot; ani &gt;, přidány chybějící symboly $
+    html: `<div class="class-label" style="color: ${c.color}; border-color: ${c.color}; transform: translate(15px, -15px);">${c.trida}</div>`,
+    iconSize: [0, 0]
+  })
+}).addTo(layerGroup);
 
         const progress = totalKm > 0 ? (kmClamped / totalKm) : 0;
 
@@ -371,6 +372,7 @@ const classMarker = L.circleMarker([pos[1], pos[0]], {
 </body>
 
 </html>
+
 
 
 
