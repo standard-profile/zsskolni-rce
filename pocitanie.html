@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kam až dojdem o jarních prázdninách - Sčítání výsledků</title>
+  
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    :root { --border:#e8e8e8; --bg:#ffffff; --muted:#666; }
+    body { 
+      margin:0; 
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+      background: var(--bg);
+      overflow: hidden; 
+    }
+    
+    header { padding: 14px 16px; border-bottom: 1px solid var(--border); background: #f8f9fa; position: relative; z-index: 20; }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .header-left { display: flex; align-items: center; gap: 20px; }
+    .header-logo { height: 65px; width: auto; }
+    h1 { margin: 0; font-size: 18px; }
+
+    .results-pending {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 100px);
+      position: relative;
+      /* PŘIDANÉ POZADÍ */
+      background-image: url('mapa_pozadie.png'); /* Případně změňte příponu na .jpg podle vašeho souboru */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    /* Přidali jsme jemné ztmavení pozadí, aby bílý box a stopy lépe vynikly */
+    .results-pending::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.3); /* Jemný světlý závoj přes mapu */
+      z-index: 1;
+    }
+
+    .announcement-box {
+      background: rgba(255, 255, 255, 0.98);
+      padding: 40px;
+      border-radius: 25px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+      z-index: 10;
+      border: 2px solid #eee;
+      max-width: 550px;
+      text-align: center;
+    }
+
+    /* ZÁKLADNÍ TVAR STOPY */
+    .foot {
+      position: absolute;
+      width: 18px;
+      height: 40px;
+      background: #111; 
+      opacity: 0;
+      border-radius: 45% 45% 35% 35%;
+      animation: stepLoop 4s infinite linear;
+      z-index: 5; /* Aby byly stopy nad mapou, ale pod boxem (nebo nad ním, pokud chcete) */
+    }
+    .foot::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      left: 2px;
+      width: 14px;
+      height: 12px;
+      background: inherit;
+      border-radius: 30% 30% 50% 50%;
+    }
+
+    @keyframes stepLoop {
+      0% { opacity: 0; }
+      10% { opacity: 0.5; } /* Trochu víc viditelné na mapě */
+      30% { opacity: 0.5; }
+      50% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    .left { transform: rotate(var(--rot)) translateX(-12px); }
+    .right { transform: rotate(var(--rot)) translateX(12px) scaleX(-1); }
+
+    .path-a { --rot: 75deg; }
+    .a1 { top: 65%; left: 5%; animation-delay: 0.2s; }
+    .a2 { top: 62%; left: 15%; animation-delay: 0.6s; }
+    .a3 { top: 59%; left: 25%; animation-delay: 1.0s; }
+    .a4 { top: 56%; left: 35%; animation-delay: 1.4s; }
+
+    .path-b { --rot: -105deg; }
+    .b1 { top: 25%; left: 90%; animation-delay: 2.0s; }
+    .b2 { top: 22%; left: 80%; animation-delay: 2.4s; }
+    .b3 { top: 25%; left: 70%; animation-delay: 2.8s; }
+    .b4 { top: 22%; left: 60%; animation-delay: 3.2s; }
+
+    .path-c { --rot: 175deg; }
+    .c1 { top: 5%; left: 75%; animation-delay: 0.4s; }
+    .c2 { top: 15%; left: 78%; animation-delay: 0.8s; }
+    .c3 { top: 25%; left: 75%; animation-delay: 1.2s; }
+    .c4 { top: 35%; left: 78%; animation-delay: 1.6s; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <img src="logo.png" alt="Logo školy" class="header-logo">
+      <div>
+        <h1>Kam až dojdem o jarních prázdninách</h1>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="results-pending">
+  <div class="foot left  path-a a1"></div>
+  <div class="foot right path-a a2"></div>
+  <div class="foot left  path-a a3"></div>
+  <div class="foot right path-a a4"></div>
+
+  <div class="foot left  path-b b1"></div>
+  <div class="foot right path-b b2"></div>
+  <div class="foot left  path-b b3"></div>
+  <div class="foot right path-b b4"></div>
+
+  <div class="foot left  path-c c1"></div>
+  <div class="foot right path-c c2"></div>
+  <div class="foot left  path-c c3"></div>
+  <div class="foot right path-c c4"></div>
+
+  <div class="announcement-box">
+    <h2>🏁 Cílová páska protnuta!</h2>
+    <p>Děkujeme všem žákům a třídám za neuvěřitelné výkony během jarních prázdnin.</p>
+    <p><strong>Právě sčítáme poslední kilometry z vašich deníků a připravujeme vyhlášení výsledků.</strong></p>
+    <p style="margin-top: 20px; font-weight: bold; color: #d9534f;">Sledujte tuto stránku, výsledky zveřejníme již brzy!</p>
+  </div>
+</main>
+
+</body>
+</html>
